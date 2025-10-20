@@ -1,0 +1,46 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcoAssistant.API", "EcoAssistant.API\EcoAssistant.API.csproj", "{9BE6F4F7-CA4C-4630-98B4-F9762A903703}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcoAssistant.Application", "EcoAssistant.Application\EcoAssistant.Application.csproj", "{954FA9B4-DB67-49C5-A16D-4D29DF3D9D43}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcoAssistant.Domain", "EcoAssistant.Domain\EcoAssistant.Domain.csproj", "{0BEB8480-E8C8-4E5B-BF34-3265DAF472A9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcoAssistant.Infrastructure", "EcoAssistant.Infrastructure\EcoAssistant.Infrastructure.csproj", "{5167AFF4-0B8B-4B98-9B45-0FF0B09F2985}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcoAssistant.Shared", "EcoAssistant.Shared\EcoAssistant.Shared.csproj", "{A8F10634-6AD4-4375-AA54-016D614CFADC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9BE6F4F7-CA4C-4630-98B4-F9762A903703}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9BE6F4F7-CA4C-4630-98B4-F9762A903703}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9BE6F4F7-CA4C-4630-98B4-F9762A903703}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9BE6F4F7-CA4C-4630-98B4-F9762A903703}.Release|Any CPU.Build.0 = Release|Any CPU
+		{954FA9B4-DB67-49C5-A16D-4D29DF3D9D43}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{954FA9B4-DB67-49C5-A16D-4D29DF3D9D43}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{954FA9B4-DB67-49C5-A16D-4D29DF3D9D43}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{954FA9B4-DB67-49C5-A16D-4D29DF3D9D43}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0BEB8480-E8C8-4E5B-BF34-3265DAF472A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0BEB8480-E8C8-4E5B-BF34-3265DAF472A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0BEB8480-E8C8-4E5B-BF34-3265DAF472A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0BEB8480-E8C8-4E5B-BF34-3265DAF472A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5167AFF4-0B8B-4B98-9B45-0FF0B09F2985}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5167AFF4-0B8B-4B98-9B45-0FF0B09F2985}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5167AFF4-0B8B-4B98-9B45-0FF0B09F2985}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5167AFF4-0B8B-4B98-9B45-0FF0B09F2985}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A8F10634-6AD4-4375-AA54-016D614CFADC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8F10634-6AD4-4375-AA54-016D614CFADC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8F10634-6AD4-4375-AA54-016D614CFADC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8F10634-6AD4-4375-AA54-016D614CFADC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

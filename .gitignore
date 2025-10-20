@@ -1,0 +1,78 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+bin/
+obj/
+*.log
+*.tlog
+*.tmp
+*.tmp_proj
+*.cache
+*.pdb
+*.mdb
+*.ilk
+*.idb
+*.ipch
+*.aps
+*.pch
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.log
+*.vspscc
+*.vssscc
+
+# Entity Framework Migrations
+Migrations/
+
+# User-specific files
+*.rsuser
+*.userprefs
+
+# Logs
+*.log
+logs/
+
+# IDE config
+.idea/
+*.iml
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# NuGet
+*.nupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+
+# Environment
+.env
+.env.*
+
+# Publish output
+publish/
+wwwroot/
+
+# Rider
+.idea/
+*.sln.iml
+
+# Coverage
+coverage/
+*.coverage
+*.coveragexml
+*.testlog
+
+# Database
+*.mdf
+*.ldf
+*.sqlite

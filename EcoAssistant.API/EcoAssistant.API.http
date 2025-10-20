@@ -1,0 +1,6 @@
+@EcoAssistant.API_HostAddress = http://localhost:5192
+
+GET {{EcoAssistant.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
