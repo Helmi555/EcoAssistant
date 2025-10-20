@@ -2,13 +2,21 @@ using BCrypt.Net;
 using EcoAssistant.Application.DTOs;
 using EcoAssistant.Application.Interfaces;
 using EcoAssistant.Domain.Entities;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace EcoAssistant.Application.Services;
 
-public class UserService
+public class UserService : IUserService
 {
     private readonly IUserRepository _repo;
-    public UserService(IUserRepository repo) => _repo = repo;
+    private readonly IConfiguration _config;
+
+    public UserService(IUserRepository repo, IConfiguration config)
+        => (_repo, _config) = (repo, config);
 
     public async Task<UserDto> CreateAsync(string name, string lastName, string username, string password, DateTime? dob = null, string? address = null, CancellationToken ct = default)
     {
@@ -43,10 +51,42 @@ public class UserService
         return users.Select(ToDto).ToList();
     }
 
-    private static UserDto ToDto(User u) =>
-        new(u.Id, u.Name, u.LastName, u.Username, u.CreatedAt, u.UpdatedAt, u.DateOfBirth, u.Address);
+    public async Task<string> LoginAsync(string username, string password, CancellationToken ct = default)
+    {
+            var user = await _repo.GetByUsernameAsync(username, ct) ?? throw new InvalidOperationException("user_not_found");
 
-    // Password verify helper
+        if (!VerifyPassword(user, password))
+        throw new InvalidOperationException("invalid_password"); 
+
+        var tokenHandler = new JwtSecurityTokenHandler();
+
+        var jwtKey = _config["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key not configured");
+        var jwtExpireDaysStr = _config["Jwt:ExpireDays"] ?? throw new InvalidOperationException("Jwt:ExpireDays not configured");
+        if (!int.TryParse(jwtExpireDaysStr, out var expireDays))
+            throw new InvalidOperationException("Jwt:ExpireDays is not a valid integer");
+        var issuer = _config["Jwt:Issuer"] ?? throw new InvalidOperationException("Jwt:Issuer not configured");
+        var audience = _config["Jwt:Audience"] ?? throw new InvalidOperationException("Jwt:Audience not configured");
+
+        var key = Encoding.ASCII.GetBytes(jwtKey);
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(
+            [
+                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new(ClaimTypes.Name, user.Username)
+            ]),
+            Expires = DateTime.UtcNow.AddDays(expireDays),
+            Issuer = issuer,
+            Audience = audience,
+            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+        };
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        return tokenHandler.WriteToken(token);
+    }
+
     public bool VerifyPassword(User user, string password) =>
         BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
+
+    private static UserDto ToDto(User u) =>
+        new(u.Id, u.Name, u.LastName, u.Username, u.CreatedAt, u.UpdatedAt, u.DateOfBirth, u.Address);
 }

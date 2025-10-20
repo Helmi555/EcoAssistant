@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using EcoAssistant.Application.Services;
 using EcoAssistant.API.Dtos;
+using EcoAssistant.Application.DTOs;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EcoAssistant.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/users")]
 public class UsersController : ControllerBase
 {
     private readonly UserService _svc;
@@ -26,6 +28,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [Authorize]
     public async Task<IActionResult> Get(Guid id, CancellationToken ct)
     {
         var dto = await _svc.GetByIdAsync(id, ct);
@@ -35,4 +38,21 @@ public class UsersController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> List([FromQuery] int limit = 50, [FromQuery] int offset = 0, CancellationToken ct = default) =>
         Ok(await _svc.ListAsync(limit, offset, ct));
+
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] UserLoginRequest request)
+    {
+        try
+        {
+            var token = await _svc.LoginAsync(request.Username, request.Password);
+            return Ok(new { token });
+        }
+        catch (Exception ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+
+        }
+    }
+
 }
