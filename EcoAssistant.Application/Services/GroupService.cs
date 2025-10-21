@@ -1,0 +1,66 @@
+using EcoAssistant.Application.Interfaces;
+using EcoAssistant.Domain.Entities;
+
+namespace EcoAssistant.Application.Services;
+
+public class GroupService : IGroupService
+{
+    private readonly IGroupRepository _repo;
+    private readonly IIndustryCategoryRepository _industryCategoryRepository;
+
+    public GroupService(IGroupRepository repo,IIndustryCategoryRepository industryCategoryRepository)
+    {
+        _repo = repo;
+        _industryCategoryRepository = industryCategoryRepository;
+    }
+
+    public async Task<Group?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    {
+        return await _repo.GetByIdAsync(id, ct);
+    }
+
+    public async Task<List<Group>> GetAllAsync(CancellationToken ct = default)
+    {
+        return await _repo.GetAllAsync(ct);
+    }
+
+   public async Task AddAsync(string name, string? description, Guid? industryCategoryId, CancellationToken ct = default)
+{
+    if (industryCategoryId != null)
+    {
+        var exists = await _industryCategoryRepository.ExistsAsync(industryCategoryId.Value, ct);
+        if (!exists)
+            throw new ArgumentException("Industry category not found", nameof(industryCategoryId));
+    }
+
+    var group = new Group
+    {
+        Id = Guid.NewGuid(),
+        Name = name,
+        Description = description,
+        IndustryCategoryId = industryCategoryId,
+        CreatedAt = DateTimeOffset.UtcNow,
+        UpdatedAt = DateTimeOffset.UtcNow
+    };
+
+    await _repo.AddAsync(group, ct);
+}
+
+
+    public async Task UpdateAsync(Guid id, string name, string? description, Guid? industryCategoryId, CancellationToken ct = default)
+    {
+        var group = await _repo.GetByIdAsync(id, ct) ?? throw new InvalidOperationException("Group not found");
+
+        group.Name = name;
+        group.Description = description;
+        group.IndustryCategoryId = industryCategoryId;
+        group.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _repo.UpdateAsync(group, ct);
+    }
+
+    public async Task DeleteAsync(Guid id, CancellationToken ct = default)
+    {
+        await _repo.DeleteAsync(id, ct);
+    }
+}
