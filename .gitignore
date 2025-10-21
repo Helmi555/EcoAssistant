@@ -3,7 +3,6 @@
 *.user
 *.suo
 *.userosscache
-*.sln.docstates
 
 # Build results
 bin/
@@ -64,7 +63,6 @@ wwwroot/
 
 # Rider
 .idea/
-*.sln.iml
 
 # Coverage
 coverage/
