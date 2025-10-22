@@ -28,10 +28,11 @@ public class EfUserGroupRepository : IUserGroupRepository
                  .Where(ug => ug.GroupId == groupId)
                  .ToListAsync(ct);
 
-    public async Task AddAsync(UserGroup userGroup, CancellationToken ct = default)
+    public async Task<UserGroup> AddAsync(UserGroup userGroup, CancellationToken ct = default)
     {
         _db.UserGroups.Add(userGroup);
         await _db.SaveChangesAsync(ct);
+        return userGroup;
     }
 
     public async Task UpdateAsync(UserGroup userGroup, CancellationToken ct = default)

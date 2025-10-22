@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using EcoAssistant.Domain.Entities;
 using EcoAssistant.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -19,10 +20,11 @@ public class EfGroupRepository : IGroupRepository
     public async Task<List<Group>> GetAllAsync(CancellationToken ct = default) =>
         await _db.Groups.AsNoTracking().ToListAsync(ct);
 
-    public async Task AddAsync(Group group, CancellationToken ct = default)
+    public async Task<Group> AddAsync(Group group, CancellationToken ct = default)
     {
         _db.Groups.Add(group);
-        await _db.SaveChangesAsync(ct);
+         await _db.SaveChangesAsync(ct);
+        return group;
     }
 
     public async Task UpdateAsync(Group group, CancellationToken ct = default)
@@ -41,4 +43,11 @@ public class EfGroupRepository : IGroupRepository
             await _db.SaveChangesAsync(ct);
         }
     }
+
+    public async Task<bool> ExistsAsync(Guid id, CancellationToken ct = default)
+    {
+        return await _db.Groups.AnyAsync(ic => ic.Id == id, ct);
+    }
+   
+    
 }

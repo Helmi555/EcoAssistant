@@ -1,6 +1,7 @@
 using EcoAssistant.Application.Interfaces;
 using EcoAssistant.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
+using EcoAssistant.API.Dtos;
 
 namespace EcoAssistant.API.Controllers;
 
@@ -36,12 +37,19 @@ public class UserGroupController : ControllerBase
         return Ok(userGroups);
     }
 
-    [HttpPost]
-    public async Task<IActionResult> Add([FromBody] UserGroup userGroup, CancellationToken ct)
+   [HttpPost]
+public async Task<IActionResult> Add([FromBody] UserGroupRequestDto userGroup, CancellationToken ct)
+{
+    try
     {
         await _service.AddAsync(userGroup.UserId, userGroup.GroupId, userGroup.Role, userGroup.Status, ct);
-        return CreatedAtAction(nameof(GetByIds), new { userId = userGroup.UserId, groupId = userGroup.GroupId }, userGroup);
+        return Ok(userGroup);
     }
+    catch (Exception ex)
+    {
+        return BadRequest(new { error = ex.Message });
+    }
+}
 
     [HttpPut("{userId:Guid}/{groupId:Guid}")]
     public async Task<IActionResult> Update(Guid userId, Guid groupId, [FromBody] UserGroup userGroup, CancellationToken ct)

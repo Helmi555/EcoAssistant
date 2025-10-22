@@ -1,3 +1,4 @@
+using EcoAssistant.Application.DTOs;
 using EcoAssistant.Application.Interfaces;
 using EcoAssistant.Domain.Entities;
 
@@ -24,10 +25,13 @@ public class GroupService : IGroupService
         return await _repo.GetAllAsync(ct);
     }
 
-   public async Task AddAsync(string name, string? description, Guid? industryCategoryId, CancellationToken ct = default)
-{
-    if (industryCategoryId != null)
+   public async Task<GroupDto> AddAsync(string name, string? description, Guid? industryCategoryId, CancellationToken ct = default)
     {
+    Console.WriteLine($"Debug: Group Name = {name}, IndustryCategoryId = {industryCategoryId}");
+    if (industryCategoryId != null)
+        {
+         Console.WriteLine($"Debug: IndustryCategoryId.Value = {industryCategoryId.Value}");
+
         var exists = await _industryCategoryRepository.ExistsAsync(industryCategoryId.Value, ct);
         if (!exists)
             throw new ArgumentException("Industry category not found", nameof(industryCategoryId));
@@ -43,14 +47,21 @@ public class GroupService : IGroupService
         UpdatedAt = DateTimeOffset.UtcNow
     };
 
-    await _repo.AddAsync(group, ct);
-}
+        group=await _repo.AddAsync(group, ct);
+        return GroupDto.FromEntity(group);
+    }
 
 
     public async Task UpdateAsync(Guid id, string name, string? description, Guid? industryCategoryId, CancellationToken ct = default)
     {
         var group = await _repo.GetByIdAsync(id, ct) ?? throw new InvalidOperationException("Group not found");
 
+        if (industryCategoryId != null)
+        {
+            var exists = await _industryCategoryRepository.ExistsAsync(industryCategoryId.Value, ct);
+            if (!exists)
+                throw new ArgumentException("Industry category not found", nameof(industryCategoryId));
+        }
         group.Name = name;
         group.Description = description;
         group.IndustryCategoryId = industryCategoryId;

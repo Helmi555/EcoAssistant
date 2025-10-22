@@ -1,4 +1,4 @@
-using EcoAssistant.Application.Interfaces;
+using EcoAssistant.Application.DTOs;
 using EcoAssistant.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
@@ -32,21 +32,29 @@ public class GroupController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Add([FromBody] GroupDto dto, CancellationToken ct)
     { try
-    {
-        await _groupService.AddAsync(dto.Name, dto.Description, dto.IndustryCategoryId, ct);
-        return CreatedAtAction(nameof(GetById), null);
-    }
-    catch (ArgumentException ex) when (ex.ParamName == "industryCategoryId")
-    {
-        return BadRequest(new { error = "Industry category not found" });
-    }
-    }
+        {
+            var createdGroup = await _groupService.AddAsync(dto.Name, dto.Description, dto.IndustryCategoryId, ct);
+            return CreatedAtAction(nameof(GetById), new { id = createdGroup.Id }, createdGroup);
+        }
+
+        catch (ArgumentException ex) when (ex.ParamName == "industryCategoryId")
+        {
+            return BadRequest(new { error = "Industry category not found" });
+        }
+}
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] GroupDto dto, CancellationToken ct)
     {
-        await _groupService.UpdateAsync(id, dto.Name, dto.Description, dto.IndustryCategoryId, ct);
-        return NoContent();
+        try
+        {
+            await _groupService.UpdateAsync(id, dto.Name, dto.Description, dto.IndustryCategoryId, ct);
+            return NoContent();
+        }
+        catch (ArgumentException ex) when (ex.ParamName == "industryCategoryId")
+        {
+            return BadRequest(new { error = "Industry category not found" });
+        }
     }
 
     [HttpDelete("{id}")]

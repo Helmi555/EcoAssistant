@@ -32,4 +32,10 @@ public class EfUserRepository : IUserRepository
         _db.Users.Update(user);
         await _db.SaveChangesAsync(ct);
     }
+
+ public async Task<bool> ExistsAsync(Guid id, CancellationToken ct = default)
+    {
+        return await _db.Users.AnyAsync(ic => ic.Id == id, ct);
+    }
 }
+

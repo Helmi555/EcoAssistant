@@ -10,4 +10,6 @@ public interface IUserRepository
     Task<User> AddAsync(User user, CancellationToken ct = default);
     Task<List<User>> ListAsync(int limit = 50, int offset = 0, CancellationToken ct = default);
     Task UpdateAsync(User user, CancellationToken ct = default);
+
+    Task<bool> ExistsAsync(Guid id, CancellationToken ct = default);
 }

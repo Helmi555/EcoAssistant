@@ -6,10 +6,16 @@ namespace EcoAssistant.Application.Services;
 public class UserGroupService : IUserGroupService
 {
     private readonly IUserGroupRepository _repo;
+    private readonly IUserRepository _userRepo;
 
-    public UserGroupService(IUserGroupRepository repo)
+    private readonly IGroupRepository _groupRepo;
+
+    public UserGroupService(IUserGroupRepository repo,IUserRepository userGroupRepository,IGroupRepository groupRepository)
     {
         _repo = repo;
+        _userRepo = userGroupRepository;
+        _groupRepo = groupRepository;
+
     }
 
     public async Task<UserGroup?> GetByIdsAsync(Guid userId, Guid groupId, CancellationToken ct = default)
@@ -27,8 +33,20 @@ public class UserGroupService : IUserGroupService
         return await _repo.GetByGroupIdAsync(groupId, ct);
     }
 
-    public async Task AddAsync(Guid userId, Guid groupId, GroupRole role, GroupStatus status, CancellationToken ct = default)
+    public async Task<UserGroup> AddAsync(Guid userId, Guid groupId, GroupRole role, GroupStatus status, CancellationToken ct = default)
     {
+         // Check if UserId exists
+    if (!await _userRepo.ExistsAsync(userId, ct))
+        throw new ArgumentException("User not found");
+
+        // Check if GroupId exists  
+        if (!await _groupRepo.ExistsAsync(groupId, ct))
+            throw new ArgumentException("Group not found");
+
+
+        if (await _repo.GetByIdsAsync(userId, groupId, ct)!=null)
+            throw new ArgumentException("UserGroup relationship already exists");
+        
         var userGroup = new UserGroup
         {
             UserId = userId,
@@ -39,7 +57,8 @@ public class UserGroupService : IUserGroupService
             UpdatedAt = DateTime.UtcNow
         };
 
-        await _repo.AddAsync(userGroup, ct);
+        userGroup = await _repo.AddAsync(userGroup, ct);
+        return userGroup;
     }
 
     public async Task UpdateAsync(Guid userId, Guid groupId, GroupRole role, GroupStatus status, CancellationToken ct = default)
