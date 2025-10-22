@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
 using MQTTnet;
 using MQTTnet.Client;
 using EcoAssistant.Infrastructure.Data;
@@ -14,29 +14,32 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EcoAssistant.API.Services;
 
-public class MqttOptions
-{
-    public string Host { get; set; }
-    public int Port { get; set; }
-    public string ClientId { get; set; }
-    public string? Username { get; set; }
-    public string? Password { get; set; }
-    public string TopicFilter { get; set; }
-    public bool UseTls { get; set; }
-}
-
 public class MqttHostedService : BackgroundService
 {
     private readonly ILogger<MqttHostedService> _logger;
-    private readonly MqttOptions _options;
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IConfiguration _configuration;
     private IMqttClient? _client;
+    private MqttOptions _options;
 
-    public MqttHostedService(IOptions<MqttOptions> opts, IServiceScopeFactory scopeFactory, ILogger<MqttHostedService> logger)
+    public MqttHostedService(IConfiguration configuration,
+                             IServiceScopeFactory scopeFactory,
+                             ILogger<MqttHostedService> logger)
     {
-        _options = opts.Value;
+        _configuration = configuration;
         _scopeFactory = scopeFactory;
         _logger = logger;
+
+        // Read MQTT options from appsettings.json
+        _options = _configuration.GetSection("Mqtt").Get<MqttOptions>()
+                   ?? new MqttOptions
+                   {
+                       Host = "localhost",
+                       Port = 1883,
+                       ClientId = "ecoassistant-api",
+                       TopicFilter = "devices/+/sensors/+/measure",
+                       UseTls = false
+                   };
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -66,7 +69,6 @@ public class MqttHostedService : BackgroundService
             var subscribeOptions = new MQTTnet.Client.MqttClientSubscribeOptionsBuilder()
                 .WithTopicFilter(_options.TopicFilter)
                 .Build();
-
 
             await _client.SubscribeAsync(subscribeOptions, stoppingToken);
             _logger.LogInformation("Subscribed to {Topic}", _options.TopicFilter);
@@ -107,7 +109,8 @@ public class MqttHostedService : BackgroundService
                     using var scope = _scopeFactory.CreateScope();
                     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-                    var sensor = await db.Sensors.FirstOrDefaultAsync(s => s.DeviceId == deviceId && s.LocalId == sensorId, stoppingToken);
+                    var sensor = await db.Sensors
+                        .FirstOrDefaultAsync(s => s.DeviceId == deviceId && s.LocalId == sensorId, stoppingToken);
 
                     if (sensor == null)
                     {
@@ -121,14 +124,13 @@ public class MqttHostedService : BackgroundService
                         AlertedMesure = msg.Alerted,
                         CreatedAt = msg.CreatedAt ?? DateTimeOffset.UtcNow,
                         SensorLocalId = sensorId,
-                        SensorDeviceId =deviceId
-
-
+                        SensorDeviceId = deviceId
                     };
 
                     var sensorIdProp = typeof(EcoAssistant.Domain.Entities.Mesure).GetProperty("SensorId");
                     if (sensorIdProp != null && sensorIdProp.PropertyType == typeof(int))
                         sensorIdProp.SetValue(mesure, sensor.LocalId);
+
                     var sensorDeviceIdProp = typeof(EcoAssistant.Domain.Entities.Mesure).GetProperty("SensorDeviceId");
                     if (sensorDeviceIdProp != null && sensorDeviceIdProp.PropertyType == typeof(int))
                         sensorDeviceIdProp.SetValue(mesure, sensor.DeviceId);
@@ -136,8 +138,8 @@ public class MqttHostedService : BackgroundService
                     db.Set<EcoAssistant.Domain.Entities.Mesure>().Add(mesure);
                     await db.SaveChangesAsync(stoppingToken);
 
-                    _logger.LogInformation("Saved measure for sensor db id {SensorDbId} value={Value}", sensor.PublicId,
-                        msg.Value);
+                    _logger.LogInformation("Saved measure for sensor db id {SensorDbId} value={Value}",
+                        sensor.PublicId, msg.Value);
                 }
                 else
                 {
@@ -158,7 +160,7 @@ public class MqttHostedService : BackgroundService
                 if (!_client.IsConnected)
                     await _client.ConnectAsync(mqttOptions, stoppingToken);
 
-                break; // exit loop if connected
+                break;
             }
             catch (Exception ex)
             {
@@ -167,7 +169,6 @@ public class MqttHostedService : BackgroundService
             }
         }
     }
-
 
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
@@ -183,4 +184,16 @@ public class MqttHostedService : BackgroundService
         public bool Alerted { get; set; }
         public DateTimeOffset? CreatedAt { get; set; }
     }
+}
+
+// Options class remains for deserialization
+public class MqttOptions
+{
+    public string Host { get; set; } = "localhost";
+    public int Port { get; set; } = 1883;
+    public string ClientId { get; set; } = "ecoassistant-api";
+    public string? Username { get; set; }
+    public string? Password { get; set; }
+    public string TopicFilter { get; set; } = "devices/+/sensors/+/measure";
+    public bool UseTls { get; set; } = false;
 }
