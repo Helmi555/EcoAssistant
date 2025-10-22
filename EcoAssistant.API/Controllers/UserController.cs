@@ -10,8 +10,8 @@ namespace EcoAssistant.API.Controllers;
 [Route("api/users")]
 public class UsersController : ControllerBase
 {
-    private readonly UserService _svc;
-    public UsersController(UserService svc) => _svc = svc;
+    private readonly IUserService _svc;
+    public UsersController(IUserService svc) => _svc = svc;
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateUserRequest req, CancellationToken ct)
