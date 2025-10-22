@@ -1,3 +1,4 @@
+using EcoAssistant.API.Services;
 using EcoAssistant.Application.Interfaces;
 using EcoAssistant.Application.Services;
 using EcoAssistant.Infrastructure.Data;
@@ -9,8 +10,10 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.Configure<MqttOptions>(builder.Configuration.GetSection("Mqtt"));
+builder.Services.AddSingleton(resolver => resolver.GetRequiredService<Microsoft.Extensions.Options.IOptions<MqttOptions>>().Value);
+builder.Services.AddHostedService<EcoAssistant.API.Services.MqttHostedService>();
 
-// Add services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -88,16 +91,22 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+builder.Services.Configure<MqttOptions>(
+    builder.Configuration.GetSection("Mqtt")
+);
+
+// Register the background MQTT service
+builder.Services.AddHostedService<MqttHostedService>();
 var app = builder.Build();
 
-// Apply migrations on startup (optional for development)
+
+
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
 }
 
-// Middleware pipeline
 var isHotReload = Environment.GetEnvironmentVariable("DOTNET_WATCH") == "1";
 
 if (app.Environment.IsDevelopment())
@@ -111,7 +120,7 @@ if (app.Environment.IsDevelopment())
 
 
 
-app.UseAuthentication(); // Must come before Authorization
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

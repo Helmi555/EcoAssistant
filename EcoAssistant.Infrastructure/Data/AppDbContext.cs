@@ -12,6 +12,9 @@ public class AppDbContext : DbContext
     public DbSet<Group> Groups => Set<Group>();
 
     public DbSet<IndustryCategory> IndustryCategories => Set<IndustryCategory>();
+    public DbSet<Device> Devices => Set<Device>();
+    public DbSet<Sensor> Sensors => Set<Sensor>();
+    public DbSet<Mesure> Mesures => Set<Mesure>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -83,8 +86,62 @@ public class AppDbContext : DbContext
             e.Property(x => x.CreatedAt).IsRequired();
             e.Property(x => x.UpdatedAt).IsRequired();
         });
+        builder.Entity<Device>(e =>
+        {
+            e.HasKey(d => d.Id);
+            e.Property(d => d.Status).IsRequired();
+            e.Property(d => d.Metadata).HasColumnType("jsonb");
+            e.Property(d => d.CreatedAt).IsRequired();
+            e.Property(d => d.UpdatedAt).IsRequired();
+            e.HasMany(d => d.Sensors).WithOne(s => s.Device).HasForeignKey(s => s.DeviceId).OnDelete(DeleteBehavior.Cascade);
+            e.ToTable("Devices");
+        });
 
+        builder.Entity<Sensor>(e =>
+        {
+            // clé composite : DeviceId + LocalId
+            e.HasKey(s => new { s.DeviceId, s.LocalId });
+
+            e.Property(s => s.Type).IsRequired();
+            e.Property(s => s.MinValue).IsRequired();
+            e.Property(s => s.MaxValue).IsRequired();
+            e.Property(s => s.AlertEnabled).IsRequired();
+            e.Property(s => s.Metadata).HasColumnType("jsonb");
+            e.Property(s => s.CreatedAt).IsRequired();
+            e.Property(s => s.UpdatedAt).IsRequired();
+            e.HasOne(s => s.Device).WithMany(d => d.Sensors).HasForeignKey(s => s.DeviceId).OnDelete(DeleteBehavior.Cascade);
+            e.ToTable("Sensors");
+        });
+
+        builder.Entity<Mesure>(e =>
+        {
+            e.HasKey(m => m.Id);
+            e.Property(m => m.Value).IsRequired();
+            e.Property(m => m.CreatedAt).IsRequired();
+            e.HasOne(m => m.Sensor).WithMany().HasForeignKey(m => new { m.SensorDeviceId, m.SensorLocalId }).OnDelete(DeleteBehavior.Cascade);
+            e.ToTable("Mesures");
+        });
     }
 
+    // Remplit LocalId pour les nouveaux capteurs : LocalId = max(existing.LocalId for Device) + 1
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        var added = ChangeTracker.Entries<Sensor>().Where(e => e.State == EntityState.Added).Select(e => e.Entity).ToList();
+
+        foreach (var s in added)
+        {
+            if (s.LocalId != 0) continue; // autorise assign manuel si souhaité
+
+            // récupère le max existant dans la base pour cet appareil
+            var maxForDevice = await Sensors
+                .Where(x => x.DeviceId == s.DeviceId)
+                .MaxAsync(x => (int?)x.LocalId, cancellationToken) ?? 0;
+
+            s.LocalId = maxForDevice + 1;
+        }
+
+        return await base.SaveChangesAsync(cancellationToken);
+    }
 
 }
+
