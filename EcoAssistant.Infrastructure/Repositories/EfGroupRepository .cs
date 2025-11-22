@@ -15,7 +15,11 @@ public class EfGroupRepository : IGroupRepository
     }
 
     public async Task<Group?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
-        await _db.Groups.AsNoTracking().FirstOrDefaultAsync(g => g.Id == id, ct);
+    await _db.Groups
+        .Include(g => g.Devices) 
+        .AsNoTracking()
+        .FirstOrDefaultAsync(g => g.Id == id, ct);
+
 
     public async Task<List<Group>> GetAllAsync(CancellationToken ct = default) =>
         await _db.Groups.AsNoTracking().ToListAsync(ct);

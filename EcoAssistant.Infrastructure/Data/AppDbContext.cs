@@ -75,6 +75,11 @@ public class AppDbContext : DbContext
              .WithOne(ug => ug.Group)
              .HasForeignKey(ug => ug.GroupId)
              .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasMany(g => g.Devices)
+            .WithOne(d => d.Group)
+            .HasForeignKey(d => d.GroupId)
+            .OnDelete(DeleteBehavior.SetNull);
         });
 
         builder.Entity<IndustryCategory>(e =>
@@ -95,6 +100,17 @@ public class AppDbContext : DbContext
             e.Property(d => d.UpdatedAt).IsRequired();
             e.HasMany(d => d.Sensors).WithOne(s => s.Device).HasForeignKey(s => s.DeviceId).OnDelete(DeleteBehavior.Cascade);
             e.ToTable("Devices");
+            e.Property(d => d.PictureUrl).HasColumnType("text");
+            e.Property(d=>d.DeviceName).HasMaxLength(100);
+            e.Property(d=>d.Model).HasMaxLength(100);
+            e.Property(d=>d.Manufacturer).HasMaxLength(100);
+            e.Property(d => d.Version).HasMaxLength(50);
+             e.HasOne(d => d.Group)
+         .WithMany(g => g.Devices)
+         .HasForeignKey(d => d.GroupId)
+         .OnDelete(DeleteBehavior.SetNull);
+
+        e.ToTable("Devices");
         });
 
         builder.Entity<Sensor>(e =>

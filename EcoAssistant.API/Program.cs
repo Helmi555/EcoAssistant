@@ -67,6 +67,9 @@ builder.Services.AddScoped<IGroupService, GroupService>();
 builder.Services.AddScoped<IIndustryCategoryRepository, EfIndustryCategoryRepository>();
 builder.Services.AddScoped<IIndustryCategoryService, IndustryCategoryService>();
 
+//Device
+builder.Services.AddScoped<IDeviceRepository, EfDeviceRepository>();
+
 
 
 

@@ -87,9 +87,10 @@ public class MqttHostedService : BackgroundService
             try
             {
                 var topic = e.ApplicationMessage.Topic ?? string.Empty;
-                var payload = e.ApplicationMessage.Payload == null
+                var segment = e.ApplicationMessage.PayloadSegment;
+                var payload = (segment.Array == null || segment.Count == 0)
                     ? "{}"
-                    : Encoding.UTF8.GetString(e.ApplicationMessage.Payload);
+                    : Encoding.UTF8.GetString(segment.Array, segment.Offset, segment.Count);
 
                 _logger.LogDebug("MQTT message on {Topic}: {Payload}", topic, payload);
 

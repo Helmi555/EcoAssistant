@@ -1,3 +1,4 @@
+using EcoAssistant.API.Dtos;
 using EcoAssistant.Application.DTOs;
 using EcoAssistant.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -62,5 +63,35 @@ public class GroupController : ControllerBase
     {
         await _groupService.DeleteAsync(id, ct);
         return NoContent();
+    }
+
+
+    [HttpPost("{groupId}/devices")]
+    public async Task<IActionResult> AddDeviceToGroup(Guid groupId, [FromBody] GroupRequestDto dto, CancellationToken ct)
+    {
+        try
+        {
+            await _groupService.AddDeviceToGroupAsync(groupId, dto.DeviceId, dto.DeviceName, ct);
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpDelete("{groupId}/devices/{deviceId}")]
+    public async Task<IActionResult> RemoveDeviceFromGroup(Guid groupId, int deviceId, CancellationToken ct)
+    {
+        try
+        {
+
+            await _groupService.RemoveDeviceFromGroupAsync(groupId, deviceId, ct);
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
 }

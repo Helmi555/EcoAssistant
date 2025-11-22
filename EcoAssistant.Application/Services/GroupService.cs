@@ -8,11 +8,13 @@ public class GroupService : IGroupService
 {
     private readonly IGroupRepository _repo;
     private readonly IIndustryCategoryRepository _industryCategoryRepository;
+    private readonly IDeviceRepository _deviceRepository;
 
-    public GroupService(IGroupRepository repo,IIndustryCategoryRepository industryCategoryRepository)
+    public GroupService(IGroupRepository repo,IIndustryCategoryRepository industryCategoryRepository, IDeviceRepository deviceRepository   )
     {
         _repo = repo;
         _industryCategoryRepository = industryCategoryRepository;
+        _deviceRepository = deviceRepository;
     }
 
     public async Task<Group?> GetByIdAsync(Guid id, CancellationToken ct = default)
@@ -74,4 +76,36 @@ public class GroupService : IGroupService
     {
         await _repo.DeleteAsync(id, ct);
     }
+
+    public async Task AddDeviceToGroupAsync(Guid GroupId, int DeviceId, string DeviceName, CancellationToken ct = default)
+    {
+        var group = await _repo.GetByIdAsync(GroupId, ct) ?? throw new InvalidOperationException("Group not found");
+        var device = await _deviceRepository.GetByIdAsync(DeviceId, ct) ?? throw new InvalidOperationException("Device not found");
+        if(group.Devices.Any(d => d.Id == DeviceId))
+        {
+            throw new InvalidOperationException("Device already in group");
+        }
+        group.Devices.Add(device);
+        device.DeviceName = DeviceName;
+        device.GroupId = group.Id;
+        device.Group = group;
+
+        await _repo.UpdateAsync(group);
+        await _deviceRepository.UpdateAsync(device);
+    }
+
+    public async Task RemoveDeviceFromGroupAsync(Guid GroupId, int DeviceId, CancellationToken ct = default)
+    {
+    var group = await _repo.GetByIdAsync(GroupId, ct) ?? throw new InvalidOperationException("Group not found");
+    var device = await _deviceRepository.GetByIdAsync(DeviceId, ct) ?? throw new InvalidOperationException("Device not found");
+
+var trackedDevice = group.Devices.FirstOrDefault(d => d.Id == device.Id);
+if (trackedDevice != null)
+    group.Devices.Remove(trackedDevice);
+    device.GroupId = null;
+    device.Group = null;
+
+    await _repo.UpdateAsync(group);
+    await _deviceRepository.UpdateAsync(device);
+}
 }

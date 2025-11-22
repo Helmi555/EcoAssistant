@@ -15,6 +15,7 @@ public class Group
     //Les relations lenna 
 
     public ICollection<UserGroup> UserGroups { get; set; } = new List<UserGroup>();
+    public ICollection<Device> Devices { get; set; } = new List<Device>();
     public IndustryCategory? IndustryCategory { get; set; }
 
 }
