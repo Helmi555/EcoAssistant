@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "EcoAssistant",
+  "version": "1.0.0",
+  "description": "Calculate carbon footprint for e-commerce products",
+  
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  
+  "host_permissions": [
+    "https://*.amazon.com/*"
+  ],
+  
+  "action": {
+    "default_popup": "/Frontend/dist/index.html",
+    "default_title": "Carbon Footprint Calculator"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": ["https://*.amazon.com/*"],
+      "js": ["contentScript.js"],
+      "run_at": "document_end"
+    }
+  ]
+}
