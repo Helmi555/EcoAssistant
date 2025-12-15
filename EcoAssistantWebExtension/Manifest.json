@@ -14,14 +14,14 @@
   ],
   
   "action": {
-    "default_popup": "/Frontend/dist/index.html",
+    "default_popup": "/frontend/dist/index.html",
     "default_title": "Carbon Footprint Calculator"
   },
   
   "content_scripts": [
     {
       "matches": ["https://*.amazon.com/*"],
-      "js": ["contentScript.js"],
+      "js": ["./contentScript.js"],  
       "run_at": "document_end"
     }
   ]

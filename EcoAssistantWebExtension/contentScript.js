@@ -1,108 +1,56 @@
 // contentScript.js
-console.log('EcoAssistant: Content script loaded on Amazon');
 
-// Listen for page changes (SPA navigation)
+function extractProductData() {
+  // Helpers
+  const getText = (sel) => document.querySelector(sel)?.textContent?.trim() || '';
+  const getAttr = (sel, attr) => document.querySelector(sel)?.getAttribute(attr) || '';
+
+  // Get Price
+  let price = 0;
+  const priceText = getText('.a-price .a-offscreen') || getText('.a-price-whole');
+  if (priceText) {
+    price = parseFloat(priceText.replace(/[^0-9.]/g, ''));
+  }
+
+  // Get Category
+  // Amazon breadcrumbs usually look like: Category > Sub > Item
+  const breadcrumbs = Array.from(document.querySelectorAll('#wayfinding-breadcrumbs_feature_div li a'))
+    .map(el => el.textContent.trim());
+  
+  // Get Image (High res if possible)
+  let image = getAttr('#landingImage', 'src') || 
+              getAttr('#imgBlkFront', 'src') || 
+              getAttr('.a-dynamic-image', 'src');
+
+  // If dynamic image, sometimes it's a JSON string in 'data-a-dynamic-image'
+  const dynImg = getAttr('#landingImage', 'data-a-dynamic-image');
+  if(dynImg) {
+      try {
+          const urls = Object.keys(JSON.parse(dynImg));
+          if(urls.length > 0) image = urls[0]; // Get the first key (url)
+      } catch(e) {}
+  }
+
+  const productData = {
+    asin: getAttr('input[name="ASIN"]', 'value') || 'UNKNOWN',
+    name: getText('#productTitle'),
+    price: price,
+    image: image,
+    // Join categories to help our calculator find keywords like "Food" or "Electronics"
+    category: breadcrumbs.join(' ') || getText('.a-color-tertiary') || 'General' 
+  };
+
+  if (productData.name) {
+    chrome.storage.local.set({ currentProduct: productData });
+  }
+}
+
+// Run on load and URL change
+extractProductData();
 let lastUrl = location.href;
 new MutationObserver(() => {
-  const url = location.href;
-  if (url !== lastUrl) {
-    lastUrl = url;
-    onPageChange();
+  if (location.href !== lastUrl) {
+    lastUrl = location.href;
+    setTimeout(extractProductData, 1500); // Wait for SPA render
   }
-}).observe(document, { subtree: true, childList: true });
-
-// Check if current page is a product page
-function onPageChange() {
-  if (isProductPage()) {
-    extractProductData();
-  }
-}
-
-// Check if we're on a product page
-function isProductPage() {
-  return window.location.href.includes('/dp/') || 
-         window.location.href.includes('/gp/product/');
-}
-
-// Extract product data from current page
-function extractProductData() {
-  setTimeout(() => {
-    const productData = getProductDetails();
-    if (productData.asin) {
-      // Store for popup to access
-      chrome.storage.local.set({ currentProduct: productData });
-      console.log('EcoAssistant: Product data extracted', productData);
-    }
-  }, 1000); // Wait for page to fully load
-}
-const getCategory = () => {
-  // Get the full breadcrumb path from Amazon
-  const breadcrumbs = Array.from(document.querySelectorAll('.a-breadcrumb a'));
-  
-  if (breadcrumbs.length > 0) {
-    // Get all categories in the path
-    const fullPath = breadcrumbs.map(a => a.textContent?.trim()).filter(Boolean);
-    console.log('Amazon category path:', fullPath);
-    
-    // Return the full path for better classification
-    return {
-      main: fullPath[0] || 'General',
-      sub: fullPath[1] || '',
-      fullPath: fullPath,
-      last: fullPath[fullPath.length - 1] || 'General'
-    };
-  }
-  
-  return {
-    main: 'General',
-    sub: '',
-    fullPath: [],
-    last: 'General'
-  };
-};
-// Helper function to extract product details
-function getProductDetails() {
-  const getText = (selector) => 
-    document.querySelector(selector)?.textContent?.trim() || '';
-  
-  const getPrice = () => {
-    const priceWhole = document.querySelector('.a-price-whole')?.textContent;
-    const priceFraction = document.querySelector('.a-price-fraction')?.textContent;
-    if (priceWhole) {
-      return parseFloat(priceWhole.replace(/[^0-9.]/g, '') + 
-             (priceFraction ? '.' + priceFraction : ''));
-    }
-    return 0;
-  };
-
-  const getASIN = () => {
-    // Extract ASIN from URL or page data
-    const urlMatch = window.location.href.match(/\/dp\/([A-Z0-9]{10})/);
-    if (urlMatch) return urlMatch[1];
-    
-    const dataAsin = document.querySelector('[data-asin]')?.getAttribute('data-asin');
-    return dataAsin || '';
-  };
-
-  return {
-    asin: getASIN(),
-    name: getText('#productTitle'),
-    price: getPrice(),
-    image: document.querySelector('#landingImage')?.src || 
-           document.querySelector('.a-dynamic-image')?.src ||
-           '',
-    category: Array.from(document.querySelectorAll('.a-breadcrumb a'))
-      .map(a => a.textContent?.trim())
-      .filter(Boolean)
-      .pop() || 'General',
-    color: document.querySelector('.selection li[aria-selected="true"]')?.textContent?.trim() || 
-           document.querySelector('#color_name_0')?.textContent?.trim() ||
-           'Default',
-    url: window.location.href
-  };
-}
-
-// Initial check
-if (isProductPage()) {
-  extractProductData();
-}
+}).observe(document, {subtree: true, childList: true});

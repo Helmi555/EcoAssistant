@@ -16,6 +16,9 @@ public class AppDbContext : DbContext
     public DbSet<Sensor> Sensors => Set<Sensor>();
     public DbSet<Mesure> Mesures => Set<Mesure>();
 
+    public DbSet<ProductPurchase> ProductPurchases => Set<ProductPurchase>();
+
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.Entity<User>(e =>
@@ -121,6 +124,59 @@ public class AppDbContext : DbContext
             e.HasOne(m => m.Sensor).WithMany().HasForeignKey(m => new { m.SensorDeviceId, m.SensorLocalId }).OnDelete(DeleteBehavior.Cascade);
             e.ToTable("Mesures");
         });
+        builder.Entity<ProductPurchase>(e =>
+        {
+            e.ToTable("ProductPurchases");
+
+            e.HasKey(p => p.Id);
+
+            e.Property(p => p.ProductId)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            e.Property(p => p.ProductName)
+                .IsRequired()
+                .HasMaxLength(500);
+
+            e.Property(p => p.Price)
+                .HasPrecision(18, 2);
+
+            e.Property(p => p.CarbonFootprint)
+                .HasPrecision(10, 2);
+
+            e.Property(p => p.WaterUsage)
+                .HasPrecision(10, 2);
+
+            e.Property(p => p.EnergyUsage)
+                .HasPrecision(10, 2);
+
+            e.Property(p => p.EcoScore)
+                .HasPrecision(3, 1);
+
+            e.Property(p => p.UserId)
+                .IsRequired()
+                .HasMaxLength(450);
+
+            e.Property(p => p.Store)
+                .HasMaxLength(100)
+                .HasDefaultValue("Amazon");
+
+            e.Property(p => p.ProductUrl)
+                .HasMaxLength(1000);
+
+            e.Property(p => p.Color)
+                .HasMaxLength(100);
+
+            e.Property(p => p.Category)
+                .HasMaxLength(100);
+
+            // Add indexes for better performance
+            e.HasIndex(p => p.UserId);
+            e.HasIndex(p => p.PurchaseDate);
+            e.HasIndex(p => p.Category);
+
+        });
+    }
     }
 
     // Remplit LocalId pour les nouveaux capteurs : LocalId = max(existing.LocalId for Device) + 1
